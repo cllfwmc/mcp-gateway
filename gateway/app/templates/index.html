@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <div class="max-w-5xl mx-auto p-4 space-y-6">
+    <header class="flex items-center justify-between">
+      <h1 class="text-2xl font-semibold">MCP Gateway</h1>
+      <a href="/health" class="text-sm text-blue-600 hover:underline">健康检查</a>
+    </header>
+
+    <section class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-medium mb-4">已配置的 MCP Servers</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for name, s in servers.items() %}
+        <div class="border rounded p-4">
+          <div class="font-semibold">{{ name }}</div>
+          <div class="text-sm text-gray-600">类型：{{ s.type }}</div>
+          <div class="text-sm text-gray-600 truncate">URL：{{ s.url }}</div>
+        </div>
+        {% else %}
+        <div class="col-span-2 text-gray-500">暂无配置</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-medium mb-4">快速测试</h2>
+      <form id="mcpForm" class="space-y-3">
+        <label class="block">
+          <span class="text-sm">Server 名称（可留空使用默认）</span>
+          <input name="server" class="mt-1 w-full border rounded p-2" placeholder="ezbookkeeping-mcp" />
+        </label>
+        <label class="block">
+          <span class="text-sm">请求 JSON</span>
+          <textarea name="payload" rows="6" class="mt-1 w-full border rounded p-2" placeholder='{"jsonrpc":"2.0","id":"1","method":"ping"}'></textarea>
+        </label>
+        <div class="flex gap-2">
+          <button type="button" id="btnPost" class="px-4 py-2 bg-blue-600 text-white rounded">POST /mcp</button>
+          <button type="button" id="btnSse" class="px-4 py-2 bg-emerald-600 text-white rounded">GET /sse</button>
+        </div>
+      </form>
+      <pre id="result" class="mt-4 bg-gray-100 rounded p-3 text-sm overflow-auto"></pre>
+    </section>
+  </div>
+
+  <script>
+    async function postMcp() {
+      const form = document.getElementById('mcpForm');
+      const server = form.server.value.trim();
+      const payload = form.payload.value || '{}';
+      const params = server ? `?server=${encodeURIComponent(server)}` : '';
+      const resp = await fetch(`/mcp${params}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload });
+      const text = await resp.text();
+      document.getElementById('result').textContent = text;
+    }
+    async function getSse() {
+      const form = document.getElementById('mcpForm');
+      const server = form.server.value.trim();
+      const payload = form.payload.value || '{}';
+      const params = server ? `?server=${encodeURIComponent(server)}` : '';
+      const resp = await fetch(`/sse${params}`, { method: 'GET', headers: { 'Content-Type': 'application/json' }, body: payload });
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let output = '';
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        output += decoder.decode(value);
+        document.getElementById('result').textContent = output;
+      }
+    }
+    document.getElementById('btnPost').addEventListener('click', postMcp);
+    document.getElementById('btnSse').addEventListener('click', getSse);
+  </script>
+</body>
+</html>

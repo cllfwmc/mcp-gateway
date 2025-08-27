@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  mcp-gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: mcp-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - GATEWAY_CONFIG=/app/config.yaml
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./gateway:/app/gateway:ro
+      - ./transforms/custom:/app/gateway/app/transforms/custom:ro
+    restart: unless-stopped

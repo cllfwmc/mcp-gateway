@@ -1,0 +1,53 @@
+# Cursor Rules for mcp-gateway
+
+## Language & Style
+- Default language: zh-CN（简体中文）。
+- 回答时尽量精炼，必要处使用列表与小标题增强可读性。
+- 代码变更一律称为“编辑”（edits），不要说“补丁/patch”。
+- 在消息中提到文件、目录、类、函数名时使用反引号包裹，例如 `gateway/app/main.py`、`routers/sse.py`。
+
+## Formatting
+- 仅在需要展示代码/命令/表格等结构化信息时使用 Markdown 代码块。
+- 禁止把整条消息都包在一个代码块中。
+- 展示代码：
+  - 若为仓库已有代码，使用三元标注块：```startLine:endLine:filepath```。
+  - 若为新代码示例或片段，使用语言标注代码块，例如 ```python、```bash。
+- 数学表达使用 \( inline \) 与 \[ block \]。
+
+## Tools & Workflows
+- 后端以 Python 为主（FastAPI + httpx + uvicorn）。
+- UI 使用 Jinja2 + Tailwind CDN（无需构建步骤）。
+- 提供 Docker 一键部署（Dockerfile + docker-compose.yml）。
+- 标准化配置文件：`config.yaml`，支持多个 MCP Server，类型含 `streamable-http`。
+- 转换器（transformers）可插拔：默认转换器 + 自定义脚本（在 `transforms/custom/` 目录下）。
+- 三种协议统一：
+  - 原 `POST /mcp` 直通转发（streamable-http）。
+  - `GET /sse` 将 HTTP 流转为 SSE 推送。
+  - 本地 `stdio` 桥（`python -m gateway.app.stdio_bridge`）。
+
+## Development
+- Python 代码遵循：
+  - 明确函数签名与类型注解（若不影响可读性）。
+  - 变量名使用完整词语，表达语义。
+  - 早返回、优先处理边界与错误；避免多层嵌套。
+  - 不添加无意义注释；复杂逻辑在函数/类上方进行简短说明。
+- 变更前先读文件再编辑；避免一次提交跨太多无关文件。
+- 新功能应包含最小可运行路径与错误处理。
+
+## Security
+- 支持通过环境变量与 `config.yaml` 提供下游 `Authorization` 头。
+- 不在日志打印敏感信息（令牌、密钥），必要时使用掩码。
+
+## Testing & Linting
+- 保存编辑后，确保无语法错误与基础类型错误。
+- 重要变更后启动本地服务自检（`uvicorn`）或 `docker-compose up` 自测。
+
+## File Layout (expected)
+- `gateway/app/main.py`：FastAPI 入口与路由汇总
+- `gateway/app/routers/mcp.py`：`POST /mcp` 直通代理
+- `gateway/app/routers/sse.py`：`GET /sse` SSE 转换
+- `gateway/app/stdio_bridge.py`：本地 stdio 桥
+- `gateway/app/config.py`：配置加载与模型
+- `gateway/app/transforms/`：转换器框架与注册
+- `gateway/app/templates/`：Jinja2 模板（UI）
+- `requirements.txt`、`docker/Dockerfile`、`docker-compose.yml`
