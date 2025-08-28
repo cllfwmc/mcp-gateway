@@ -5,10 +5,22 @@ import os
 import yaml
 
 
+def _interpolate_env(value: str) -> str:
+    # Simple ${VAR} interpolation
+    out = value
+    for part in os.environ:
+        token = "${" + part + "}"
+        if token in out:
+            out = out.replace(token, os.environ.get(part, ""))
+    return out
+
+
 class MCPServer(BaseModel):
     type: str = Field(..., description="server type, e.g. streamable-http")
     url: str
     headers: Dict[str, str] | None = None
+    requestTransform: str | None = None
+    responseTransform: str | None = None
 
 
 class ConfigSchema(BaseModel):
@@ -27,6 +39,14 @@ class ConfigLoader:
         config_path = path or os.getenv("GATEWAY_CONFIG", "config.yaml")
         with open(config_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
+        # env interpolation for headers values
+        servers = data.get("mcpServers", {}) or {}
+        for _, srv in servers.items():
+            headers = srv.get("headers") or {}
+            for hk, hv in list(headers.items()):
+                if isinstance(hv, str):
+                    headers[hk] = _interpolate_env(hv)
+            srv["headers"] = headers
         cfg = ConfigSchema(**data)
         cls._instance = cfg
         return cfg

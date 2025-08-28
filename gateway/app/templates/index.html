@@ -15,12 +15,13 @@
 
     <section class="bg-white rounded-lg shadow p-6">
       <h2 class="text-lg font-medium mb-4">已配置的 MCP Servers</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md-grid-cols-2 gap-4">
         {% for name, s in servers.items() %}
         <div class="border rounded p-4">
           <div class="font-semibold">{{ name }}</div>
           <div class="text-sm text-gray-600">类型：{{ s.type }}</div>
           <div class="text-sm text-gray-600 truncate">URL：{{ s.url }}</div>
+          <div class="text-xs text-gray-500 mt-1">requestTransform: {{ s.requestTransform or 'default' }}, responseTransform: {{ s.responseTransform or 'default' }}</div>
         </div>
         {% else %}
         <div class="col-span-2 text-gray-500">暂无配置</div>
@@ -62,8 +63,11 @@
       const form = document.getElementById('mcpForm');
       const server = form.server.value.trim();
       const payload = form.payload.value || '{}';
-      const params = server ? `?server=${encodeURIComponent(server)}` : '';
-      const resp = await fetch(`/sse${params}`, { method: 'GET', headers: { 'Content-Type': 'application/json' }, body: payload });
+      const params = new URLSearchParams();
+      if (server) params.set('server', server);
+      if (payload) params.set('q', payload);
+      const url = `/sse?${params.toString()}`;
+      const resp = await fetch(url);
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let output = '';

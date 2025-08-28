@@ -1,0 +1,34 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Debug Uvicorn",
+            "module": "uvicorn",
+            "args": [
+                "gateway.app.main:app",
+                "--host", "0.0.0.0",
+                "--port", "8000"
+            ],
+            "envFile": "${workspaceFolder}/.env",
+            "console": "integratedTerminal"
+        }
+        ,
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Run Uvicorn",
+            "module": "uvicorn",
+            "args": [
+                "gateway.app.main:app",
+                "--host", "0.0.0.0",
+                "--port", "8000"
+            ],
+            "envFile": "${workspaceFolder}/.env",
+            "console": "integratedTerminal"
+            ,
+            "justMyCode": true
+        }
+    ]
+}
