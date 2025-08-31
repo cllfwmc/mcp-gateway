@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from .config import ConfigLoader
 from .routers.mcp import router as mcp_router
 from .routers.sse import router as sse_router
+from .routers.admin import router as admin_router
 
 app = FastAPI(title="MCP Gateway", version="0.1.0")
 
@@ -14,6 +15,7 @@ templates = Jinja2Templates(directory="gateway/app/templates")
 # Routers
 app.include_router(mcp_router, prefix="")
 app.include_router(sse_router, prefix="")
+app.include_router(admin_router, prefix="")
 
 
 @app.get("/health", response_class=JSONResponse)
@@ -29,3 +31,8 @@ async def index(request: Request):
         "index.html",
         {"request": request, "title": "MCP Gateway", "servers": cfg.mcp_servers},
     )
+
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_page(request: Request):
+    return templates.TemplateResponse("admin.html", {"request": request})

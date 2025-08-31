@@ -15,7 +15,7 @@ RUN pip install -r /app/requirements.txt
 
 # App code
 COPY gateway /app/gateway
-COPY config.yaml /app/config.yaml
+COPY config.json /app/config.json
 
 EXPOSE 8000
 

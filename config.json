@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ezbookkeeping-mcp": {
+      "type": "streamable-http",
+      "url": "http://8.159.129.44:5457/mcp",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyVG9rZW5JZCI6IjE5MDYxMDA5ODQ2MzE3NjM2MDEiLCJqdGkiOiIzNzcwMzMzMDk2MDAwMzU2MzUyIiwidXNlcm5hbWUiOiJjbGxmd21jIiwidHlwZSI6NSwiaWF0IjoxNzU1OTY1NTczLCJleHAiOjEwOTc5MzM3NjEwfQ.LFbrUAkFmXblC3Ui4K1R8X0nBUAXOsHSx_BjJeJfF4Q"
+      },
+      "requestTransform": null,
+      "responseTransform": null
+    }
+  }
+}

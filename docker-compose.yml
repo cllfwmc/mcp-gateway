@@ -8,9 +8,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - GATEWAY_CONFIG=/app/config.yaml
+      - GATEWAY_CONFIG=/app/config.json
     volumes:
-      - ./config.yaml:/app/config.yaml:ro
+      - ./config.json:/app/config.json:ro
       - ./gateway:/app/gateway:ro
       - ./transforms/custom:/app/gateway/app/transforms/custom:ro
     restart: unless-stopped

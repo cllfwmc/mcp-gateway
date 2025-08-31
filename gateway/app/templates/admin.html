@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MCP Gateway - 管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <div class="max-w-6xl mx-auto p-4 space-y-6">
+    <header class="flex items-center justify-between">
+      <h1 class="text-2xl font-semibold">MCP Gateway 管理</h1>
+      <div class="flex gap-2">
+        <a href="/" class="text-sm text-blue-600 hover:underline">返回首页</a>
+        <button id="btnAdd" class="px-4 py-2 bg-green-600 text-white rounded text-sm">添加服务器</button>
+      </div>
+    </header>
+
+    <div id="serverList" class="space-y-4">
+      <!-- Server list will be populated here -->
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
+        <h2 id="modalTitle" class="text-lg font-semibold mb-4">添加 MCP 服务器</h2>
+        <form id="serverForm" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-sm font-medium">服务器名称 *</span>
+              <input name="name" type="text" required class="mt-1 w-full border rounded p-2" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium">类型 *</span>
+              <select name="type" required class="mt-1 w-full border rounded p-2">
+                <option value="streamable-http">streamable-http</option>
+              </select>
+            </label>
+          </div>
+          <label class="block">
+            <span class="text-sm font-medium">URL *</span>
+            <input name="url" type="url" required class="mt-1 w-full border rounded p-2" placeholder="http://127.0.0.1:1234/mcp" />
+          </label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-sm font-medium">请求转换器</span>
+              <input name="requestTransform" type="text" class="mt-1 w-full border rounded p-2" placeholder="default" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium">响应转换器</span>
+              <input name="responseTransform" type="text" class="mt-1 w-full border rounded p-2" placeholder="default" />
+            </label>
+          </div>
+          <label class="block">
+            <span class="text-sm font-medium">Headers (JSON)</span>
+            <textarea name="headers" rows="3" class="mt-1 w-full border rounded p-2" placeholder='{"Authorization": "Bearer ${TOKEN}"}'></textarea>
+          </label>
+          <div class="flex gap-2 justify-end">
+            <button type="button" id="btnCancel" class="px-4 py-2 border rounded">取消</button>
+            <button type="submit" id="btnSubmit" class="px-4 py-2 bg-blue-600 text-white rounded">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tools Detail Modal -->
+    <div id="toolsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="toolsModalTitle" class="text-lg font-semibold">工具列表</h2>
+          <button id="btnCloseTools" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="toolsList" class="space-y-4">
+          <!-- Tools will be populated here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6">
+        <div class="text-center">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p>处理中...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let editingServer = null;
+
+    function showLoading() {
+      document.getElementById('loading').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      document.getElementById('loading').classList.add('hidden');
+    }
+
+    function showMessage(message, isError = false) {
+      const div = document.createElement('div');
+      div.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${isError ? 'bg-red-600' : 'bg-green-600'}`;
+      div.textContent = message;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 3000);
+    }
+
+    async function loadServers() {
+      try {
+        showLoading();
+        const resp = await fetch('/admin/servers');
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        }
+        const servers = await resp.json();
+        const container = document.getElementById('serverList');
+        container.innerHTML = servers.map(server => `
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold">${server.name}</h3>
+                <div class="text-sm text-gray-600 mt-1">类型：${server.type}</div>
+                <div class="text-sm text-gray-600">URL：${server.url}</div>
+                <div class="text-xs text-gray-500 mt-1">
+                  转换器：${server.requestTransform || 'default'} → ${server.responseTransform || 'default'}
+                </div>
+                <div class="text-xs text-gray-500 mt-1">
+                  可用工具：<span class="font-medium text-blue-600">${server.toolsCount}</span> 个
+                  ${server.toolsCount > 0 ? `<button onclick="showTools('${server.name}')" class="ml-2 text-blue-600 underline text-xs">查看详情</button>` : ''}
+                </div>
+                ${server.headers ? `<div class="text-xs text-gray-500 mt-1">Headers：${JSON.stringify(server.headers)}</div>` : ''}
+              </div>
+              <div class="flex gap-2 ml-4">
+                <button onclick="editServer('${server.name}')" class="px-3 py-1 bg-blue-600 text-white rounded text-sm">编辑</button>
+                <button onclick="deleteServer('${server.name}')" class="px-3 py-1 bg-red-600 text-white rounded text-sm">删除</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading servers:', error);
+        showMessage('加载服务器列表失败: ' + error.message, true);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    async function showTools(serverName) {
+      try {
+        showLoading();
+        const resp = await fetch(`/admin/servers/${serverName}/tools`);
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        }
+        const data = await resp.json();
+        
+        document.getElementById('toolsModalTitle').textContent = `${serverName} - 工具列表 (${data.tools.length}个)`;
+        
+        const toolsContainer = document.getElementById('toolsList');
+        if (data.tools.length === 0) {
+          toolsContainer.innerHTML = '<p class="text-gray-500 text-center py-8">暂无可用工具</p>';
+        } else {
+          toolsContainer.innerHTML = data.tools.map(tool => `
+            <div class="border rounded-lg p-4">
+              <h4 class="font-semibold text-lg mb-2">${tool.name}</h4>
+              ${tool.description ? `<p class="text-gray-600 mb-3">${tool.description}</p>` : ''}
+              ${tool.inputSchema ? `
+                <div class="mt-3">
+                  <h5 class="font-medium text-sm text-gray-700 mb-2">输入参数：</h5>
+                  <pre class="bg-gray-100 p-3 rounded text-xs overflow-x-auto">${JSON.stringify(tool.inputSchema, null, 2)}</pre>
+                </div>
+              ` : ''}
+            </div>
+          `).join('');
+        }
+        
+        document.getElementById('toolsModal').classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading tools:', error);
+        showMessage('加载工具列表失败: ' + error.message, true);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function showModal(title, data = null) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modal').classList.remove('hidden');
+      
+      if (data) {
+        Object.keys(data).forEach(key => {
+          const input = document.querySelector(`[name="${key}"]`);
+          if (input) {
+            if (key === 'headers' && data[key]) {
+              input.value = JSON.stringify(data[key], null, 2);
+            } else {
+              input.value = data[key] || '';
+            }
+          }
+        });
+      } else {
+        document.getElementById('serverForm').reset();
+      }
+    }
+
+    function hideModal() {
+      document.getElementById('modal').classList.add('hidden');
+      editingServer = null;
+    }
+
+    function hideToolsModal() {
+      document.getElementById('toolsModal').classList.add('hidden');
+    }
+
+    async function editServer(name) {
+      try {
+        showLoading();
+        const resp = await fetch(`/admin/servers/${name}`);
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        }
+        const server = await resp.json();
+        editingServer = name;
+        showModal('编辑 MCP 服务器', server);
+      } catch (error) {
+        console.error('Error loading server:', error);
+        showMessage('加载服务器信息失败: ' + error.message, true);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    async function deleteServer(name) {
+      if (!confirm(`确定要删除服务器 "${name}" 吗？`)) return;
+      
+      try {
+        showLoading();
+        const resp = await fetch(`/admin/servers/${name}`, { method: 'DELETE' });
+        if (!resp.ok) {
+          const error = await resp.json();
+          throw new Error(error.detail || `HTTP ${resp.status}`);
+        }
+        showMessage('服务器删除成功');
+        loadServers();
+      } catch (error) {
+        console.error('Error deleting server:', error);
+        showMessage('删除失败: ' + error.message, true);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    document.getElementById('btnAdd').addEventListener('click', () => {
+      showModal('添加 MCP 服务器');
+    });
+
+    document.getElementById('btnCancel').addEventListener('click', hideModal);
+    document.getElementById('btnCloseTools').addEventListener('click', hideToolsModal);
+
+    document.getElementById('serverForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('btnSubmit');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = '保存中...';
+      submitBtn.disabled = true;
+      
+      try {
+        showLoading();
+        const formData = new FormData(e.target);
+        const data = {
+          name: formData.get('name'),
+          type: formData.get('type'),
+          url: formData.get('url'),
+          requestTransform: formData.get('requestTransform') || null,
+          responseTransform: formData.get('responseTransform') || null
+        };
+        
+        const headersText = formData.get('headers');
+        if (headersText) {
+          try {
+            data.headers = JSON.parse(headersText);
+          } catch (e) {
+            showMessage('Headers JSON 格式错误', true);
+            return;
+          }
+        }
+
+        const url = editingServer ? `/admin/servers/${editingServer}` : '/admin/servers';
+        const method = editingServer ? 'PUT' : 'POST';
+        
+        const resp = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        if (!resp.ok) {
+          const error = await resp.json();
+          throw new Error(error.detail || `HTTP ${resp.status}`);
+        }
+        
+        showMessage(editingServer ? '服务器更新成功' : '服务器添加成功');
+        hideModal();
+        loadServers();
+      } catch (error) {
+        console.error('Error saving server:', error);
+        showMessage('操作失败: ' + error.message, true);
+      } finally {
+        hideLoading();
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Load servers on page load
+    loadServers();
+  </script>
+</body>
+</html>

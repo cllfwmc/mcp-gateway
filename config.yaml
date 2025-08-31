@@ -1,8 +1,0 @@
-mcpServers:
-  ${MCP_SERVER_NAME}:
-    type: ${MCP_TYPE}
-    url: ${MCP_SERVER_URL}
-    headers:
-      Authorization: ${MCP_AUTH_TYPE} ${TOKEN}
-    env_file:
-      - .env
