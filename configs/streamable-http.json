@@ -1,0 +1,5 @@
+{
+  "protocol": "streamable-http",
+  "endpoint": "http://localhost:8080/mcp",
+  "headers": {"Authorization": "Bearer ${TOKEN}"}
+}

@@ -1,0 +1,22 @@
+name: MCP Gateway
+on_save_actions:
+  - sort_imports
+  - format
+style:
+  python:
+    max_line_length: 100
+    quote_style: double
+    trailing_commas: true
+  markdown:
+    wrap: 100
+rules:
+  - Prefer explicit function and variable names; avoid abbreviations.
+  - Keep FastAPI route handlers thin; delegate to services.
+  - Add docstrings to public functions and classes.
+  - Avoid inline comments; explain intent above complex blocks.
+  - Do not introduce blocking I/O in async routes; use httpx.AsyncClient.
+  - Handle auth via dependency-based bearer token or session; no globals.
+  - Keep Docker image small; use slim Python and multi-stage builds.
+  - UI assets must be responsive and lightweight; no heavy frameworks by default.
+  - Store secrets in environment variables; never commit secrets.
+  - Write adapters with a common interface for sse, stdio, streamable-http.

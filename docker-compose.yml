@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  mcp-gateway:
+    build: .
+    image: mcp-gateway:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - MCP_GATEWAY_TOKEN=${MCP_GATEWAY_TOKEN}
+      - MCP_GATEWAY_SECRET=${MCP_GATEWAY_SECRET}
+      - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-*}
+      - MCP_CONFIG_DIR=${MCP_CONFIG_DIR:-configs}
+      - UI_PATH=${UI_PATH:-ui}
+    volumes:
+      - ./configs:/app/configs
+      - ./ui:/app/ui
+    restart: unless-stopped

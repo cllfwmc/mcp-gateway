@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>MCP Gateway</title>
+	<link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+	<header class="topbar">
+		<h1>MCP Gateway</h1>
+		<div class="actions">
+			<input id="token" placeholder="Bearer Token (可选)" />
+			<button id="ping">健康检查</button>
+		</div>
+	</header>
+	<main class="container">
+		<section class="card">
+			<h2>模板下载</h2>
+			<ul id="templates"></ul>
+		</section>
+		<section class="card">
+			<h2>协议转换</h2>
+			<textarea id="source" placeholder='{"name":"custom","endpoint":"http://..."}'></textarea>
+			<div class="row">
+				<select id="target">
+					<option value="streamable-http">streamable-http</option>
+					<option value="sse">sse</option>
+					<option value="stdio">stdio</option>
+				</select>
+				<button id="convert">转换</button>
+			</div>
+			<pre id="result"></pre>
+		</section>
+		<section class="card">
+			<h2>MCP 工具</h2>
+			<pre id="tools"></pre>
+		</section>
+	</main>
+	<script src="/ui/main.js"></script>
+</body>
+</html>

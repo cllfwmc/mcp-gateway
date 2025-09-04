@@ -1,0 +1,5 @@
+{
+  "protocol": "sse",
+  "endpoint": "http://localhost:8080/mcp/events",
+  "headers": {"Authorization": "Bearer ${TOKEN}"}
+}
